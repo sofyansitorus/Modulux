@@ -12,6 +12,7 @@
 namespace Modulux;
 
 use Exception;
+use Parsedown;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
@@ -111,6 +112,8 @@ final class Modulux extends Modulux_Base {
 		load_plugin_textdomain( 'modulux', false, dirname( MODULUX_PATH ) . '/lang' );
 
 		add_action( 'admin_menu', array( $this, 'add_menu_page' ) );
+
+		add_action( 'admin_post_module_details', array( $this, 'render_module_details' ) );
 
 		// Filter to add plugin setting links.
 		add_filter( 'plugin_action_links_' . plugin_basename( MODULUX_FILE ), array( $this, 'plugin_action_links' ), 99, 2 );
@@ -221,6 +224,8 @@ final class Modulux extends Modulux_Base {
 	 */
 	private function get_module_class( $file ) {
 
+		// @codingStandardsIgnoreStart
+		// phpcs:disable
 		// We don't need to write to the file, so just open for reading.
 		$fp = fopen( $file, 'r' );
 
@@ -229,6 +234,8 @@ final class Modulux extends Modulux_Base {
 
 		// PHP will close file handle, but we are good citizens.
 		fclose( $fp );
+		// phpcs:enable
+		// @codingStandardsIgnoreEnd
 
 		// Make sure we catch CR-only line endings.
 		$contents = str_replace( "\r", "\n", $contents );
@@ -333,7 +340,7 @@ final class Modulux extends Modulux_Base {
 	 * @return array|bool Array of module property data. False if module not exists.
 	 */
 	private function get_module_data( $module ) {
-		if ( ! isset( $this->mod_installed[ $module ] ) ) {
+		if ( ! $module || ! isset( $this->mod_installed[ $module ] ) ) {
 			return false;
 		}
 		return $this->mod_installed[ $module ];
@@ -529,6 +536,7 @@ final class Modulux extends Modulux_Base {
 			<h1 class="wp-heading-inline"><?php echo esc_html( $this->plugin_data['Name'] ); ?></h1>
 			<a href="<?php echo esc_url( $this->admin_url( array( 'action' => 'reload_modules' ) ) ); ?>" class="page-title-action"><?php esc_html_e( 'Reload Modules', 'modulux' ); ?></a>
 			<hr class="wp-header-end">
+			<?php add_thickbox(); ?>
 			<ul class="subsubsub">
 				<li class="all">
 					<a href="<?php echo esc_url( $this->admin_url() ); ?>">
@@ -630,7 +638,27 @@ final class Modulux extends Modulux_Base {
 								<?php if ( $module['data']['author_name'] ) : ?>
 									&nbsp;|&nbsp;
 									<span class="row-meta author">
-										<?php esc_html_e( 'By' ); ?> <a href="<?php echo esc_url( $module['data']['author_url'] ); ?>"><?php echo esc_html( $module['data']['author_name'] ); ?></a>
+										<?php esc_html_e( 'By', 'modulux' ); ?> <a href="<?php echo esc_url( $module['data']['author_url'] ); ?>"><?php echo esc_html( $module['data']['author_name'] ); ?></a>
+									</span>
+								<?php endif; ?>
+								<?php if ( $this->get_module_readme( $module['id'] ) ) : ?>
+									&nbsp;|&nbsp;
+									<span class="row-meta author">
+										<a href="
+										<?php
+										echo esc_url(
+											$this->admin_url(
+												array(
+													'action' => 'module_details',
+													'module' => $module['id'],
+													'TB_iframe' => 'true',
+													'width' => '772',
+													'height' => '600',
+												), 'admin-post.php'
+											)
+										);
+										?>
+										" class="thickbox" data-id="<?php echo esc_attr( $module['id'] ); ?>"><?php esc_html_e( 'View Details', 'modulux' ); ?></a>
 									</span>
 								<?php endif; ?>
 							</div>
@@ -648,6 +676,64 @@ final class Modulux extends Modulux_Base {
 				</tfoot>
 			</table>
 		</div>
+		<?php
+	}
+
+	/**
+	 * Render module details.
+	 *
+	 * This method will parse readme.md located in the module directory.
+	 *
+	 * @return void
+	 */
+	public function render_module_details() {
+		if ( ! isset( $_REQUEST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_REQUEST['_wpnonce'] ) ), MODULUX_SLUG ) ) {
+			wp_die( esc_html__( 'Invalid nonce!', 'modulux' ) );
+		}
+
+		$module = isset( $_REQUEST['module'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['module'] ) ) : false;
+
+		$module_data = $this->get_module_data( $module );
+
+		if ( ! $module_data ) {
+			wp_die( esc_html__( 'Module is invalid or not exist!', 'modulux' ) );
+		}
+
+		if ( ! $this->get_module_readme( $module ) ) {
+			wp_die( esc_html__( 'Module redame file is not exists!', 'modulux' ) );
+		}
+
+		$ouput = '';
+
+		$parsedown = new Parsedown();
+
+		// @codingStandardsIgnoreStart
+		// phpcs:disable
+		$file = fopen( $this->get_module_readme( $module ), 'r' );
+		if ( $file ) {
+			while ( ! feof( $file ) ) {
+				$line   = fgets( $file );
+				$ouput .= $parsedown->text( $line );
+			}
+			fclose( $file );
+		}
+		// phpcs:enable
+		// @codingStandardsIgnoreEnd
+		?>
+		<!DOCTYPE html>
+		<html>
+		<head>
+			<meta charset="utf-8" />
+			<meta http-equiv="X-UA-Compatible" content="IE=edge">
+			<title><?php esc_html_e( 'Module Details', 'modulux' ); ?>: <?php echo esc_html( $module_data['data']['name'] ); ?></title>
+			<meta name="viewport" content="width=device-width, initial-scale=1">
+		</head>
+		<body>
+		<?php
+		echo wp_kses( $ouput, wp_kses_allowed_html( 'post' ) );
+		?>
+		</body>
+		</html>
 		<?php
 	}
 
