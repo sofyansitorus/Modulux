@@ -102,8 +102,8 @@ final class Modulux extends Modulux_Base {
 	public function plugins_loaded() {
 
 		// Check dependency and compatibility.
-		if ( ! $this->is_vc_activated() || ! $this->is_vc_version_compatible() ) {
-			return false;
+		if ( ! $this->check_dependencies() ) {
+			return;
 		}
 
 		// Set plugin data.
@@ -763,14 +763,8 @@ final class Modulux extends Modulux_Base {
 	public function activation_hook() {
 
 		// Check dependencies.
-		if ( ! $this->is_vc_activated() ) {
-			die( esc_html__( 'You must install and activate WPBakery Page Builder plugin before activating this plugin.', 'modulux' ) );
-		}
-
-		// Check compatibility.
-		if ( ! $this->is_vc_version_compatible() ) {
-			// translators: %s WPBakery version.
-			die( sprintf( esc_html__( 'This plugin requires WPBakery Page Builder plugin version %s or greater', 'modulux' ), esc_html( MODULUX_MIN_VC_VERSION ) ) );
+		if ( ! $this->check_dependencies() ) {
+			die( esc_html__( 'You must install and activate Beaver Builder plugin before activating this plugin.', 'modulux' ) );
 		}
 
 		if ( false === get_option( 'modulux_install_time' ) ) {
@@ -794,27 +788,13 @@ final class Modulux extends Modulux_Base {
 	}
 
 	/**
-	 * Check if VC plugin is activated
+	 * Check plugin dependencies
 	 *
 	 * @since 1.0.0
 	 * @return bool
 	 */
-	private function is_vc_activated() {
-		return is_plugin_active( 'js_composer/js_composer.php' );
-	}
-
-	/**
-	 * Check if VC plugin version is compatible
-	 *
-	 * @since 1.0.0
-	 * @return bool
-	 */
-	private function is_vc_version_compatible() {
-		if ( ! defined( 'WPB_VC_VERSION' ) ) {
-			return false;
-		}
-
-		return version_compare( WPB_VC_VERSION, MODULUX_MIN_VC_VERSION, '>' );
+	private function check_dependencies() {
+		return class_exists( 'FLBuilder' );
 	}
 
 }
