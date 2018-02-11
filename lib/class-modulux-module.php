@@ -64,7 +64,7 @@ abstract class Modulux_Module extends Modulux_Base {
 
 		// Initialize subclass.
 		if ( $this->is_enabled() ) {
-			$this->init();
+			$this->boot();
 		}
 	}
 
@@ -99,15 +99,15 @@ abstract class Modulux_Module extends Modulux_Base {
 	 *
 	 * @since  1.0.0
 	 */
-	protected function init() {
-		// Must be overriden in subclass.
+	protected function boot() {
+		// Must be overriden by subclass.
 	}
 
 	/**
 	 * Module status wheter module is enabled or not.
 	 *
 	 * If return false, user will not allowed to activate the module. Default: true.
-	 * Must be overridden in subclass.
+	 * Can be overridden by subclass.
 	 *
 	 * @since  1.0.0
 	 * @return bool
@@ -120,7 +120,7 @@ abstract class Modulux_Module extends Modulux_Base {
 	 * Module status wheter module is required or not.
 	 *
 	 * If return true, user will not allowed to deactivate the module. Default: false.
-	 * Must be overridden in subclass.
+	 * Can be overridden by subclass.
 	 *
 	 * @since  1.0.0
 	 * @return bool
@@ -133,7 +133,7 @@ abstract class Modulux_Module extends Modulux_Base {
 	 * Callback method will be executed when module installed.
 	 *
 	 * This method hooked into "'modulux_module_installed_' . $this->get_id()" action.
-	 * Must be overridden in subclass.
+	 * Can be overridden by subclass.
 	 *
 	 * @since  1.0.0
 	 * @param array $module_data Module data.
@@ -206,7 +206,7 @@ abstract class Modulux_Module extends Modulux_Base {
 			}
 		}
 
-		$this->setting->init();
+		$this->setting->build();
 	}
 
 	/**

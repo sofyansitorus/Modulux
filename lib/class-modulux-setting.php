@@ -1059,7 +1059,7 @@ class Modulux_Setting extends Modulux_Base {
 	/**
 	 * Initialize and build the settings tabs, sections and fileds.
 	 */
-	public function init() {
+	public function build() {
 
 		$this->populate_settings();
 
