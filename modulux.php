@@ -43,6 +43,7 @@ if ( ! function_exists( 'modulux_init' ) ) {
 	require_once MODULUX_PATH . 'lib/class-modulux-setting.php';
 	require_once MODULUX_PATH . 'lib/class-modulux-module.php';
 	require_once MODULUX_PATH . 'lib/class-modulux.php';
+	require_once MODULUX_PATH . 'vendor/class-parsedown.php';
 
 	/**
 	 * Initialize the Woomizer class.

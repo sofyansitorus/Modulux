@@ -129,20 +129,56 @@ abstract class Modulux_Base {
 	}
 
 	/**
+	 * Get module readme file
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $module_id Module ID.
+	 *
+	 * @return string|bool Readme file path or flase if not found.
+	 */
+	protected function get_module_readme( $module_id ) {
+
+		$files = array(
+			'readme.md',
+			'README.md',
+			'readme.txt',
+			'README.txt',
+		);
+
+		foreach ( $files as $file ) {
+			if ( file_exists( $this->get_module_dir( $module_id . '/' . $file ) ) ) {
+				return $this->get_module_dir( $module_id . '/' . $file );
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Get admin URL
 	 *
 	 * @since 1.0.0
 	 * @param array  $args URL query string.
+	 * @param string $base Base file for the admin URL.
 	 * @param string $nonce Action name for the nonce. Set false to disable the nonce.
 	 * @return string Admin menu URL.
 	 */
-	protected function admin_url( $args = array(), $nonce = MODULUX_SLUG ) {
+	protected function admin_url( $args = array(), $base = 'admin.php', $nonce = MODULUX_SLUG ) {
 		$args = wp_parse_args( $args, array( 'page' => MODULUX_SLUG ) );
-		$url  = add_query_arg( $args, admin_url( 'admin.php' ) );
+
+		// Remove "page" key from $args if it was set to false.
+		if ( ! $args['page'] && is_bool( $args['page'] ) ) {
+			unset( $args['page'] );
+		}
+
+		$url = admin_url( $base );
 
 		if ( $nonce ) {
 			$url = wp_nonce_url( $url, $nonce );
 		}
+
+		$url = add_query_arg( $args, $url );
 
 		return $url;
 	}
